@@ -117,13 +117,9 @@ Future<void> addOrder({
   required double price,
   required String notes,
 }) async {
-  double credit = await balanceOf(username);
-  if (credit >= price) {
-    // auto-debit
-    await db.collection('balances').doc(username).update({
-      'credit': FieldValue.increment(-price),
-    });
-  }
+  // Always deduct the price from the user's balance. This allows the balance
+  // to go negative if the user does not have enough funds.
+  await addCredit(username, -price);
   await db.collection('orders').add({
     'user': username,
     'foodId': foodId,
