@@ -1,7 +1,6 @@
 # food_app
 
-Class food app
-
+This app has been quickly (vibe) coded for our class. It's not great,b tu its doing what we need okayish
 ## Getting Started
 
 This project is a starting point for a Flutter application.
