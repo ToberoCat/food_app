@@ -46,86 +46,28 @@ class _ExportScreenState extends State<ExportScreen> {
             return const Center(child: Text('No orders today'));
           }
 
-          final Map<String, _Summary> grouped = {};
-          final Map<String, _VariantSummary> variantGrouped = {};
-          for (var d in docs) {
-            final data = d.data();
-            final name = data['foodName'] as String;
-            final notes = (data['notes'] as String?) ?? '';
-            final price = (data['price'] as num).toDouble();
-            final key = '$name||$notes';
-            grouped.putIfAbsent(key, () => _Summary(name, notes, price)).count++;
-
-            final v = variantGrouped.putIfAbsent(notes, () => _VariantSummary(notes));
-            v.count++;
-            v.total += price;
-          }
-
           if (_byVariant) {
-            final rows = variantGrouped.values.map((s) {
-              return DataRow(
-                color: MaterialStateProperty.all(_colorForVariant(s.notes)),
-                cells: [
-                  DataCell(Text(s.notes.isEmpty ? '-' : s.notes)),
-                  DataCell(Text('${s.count}')),
-                  DataCell(Text('€${s.total.toStringAsFixed(2)}')),
-                ],
-              );
-            }).toList();
+            final Map<String, List<Map<String, dynamic>>> byVariant = {};
+            for (var d in docs) {
+              final data = d.data();
+              final variant = (data['notes'] as String?) ?? '';
+              byVariant.putIfAbsent(variant, () => []).add(data);
+            }
 
-            final totalSum = variantGrouped.values
-                .fold<double>(0, (p, e) => p + e.total);
-
-            return Column(
-              children: [
-                Expanded(
-                  child: SingleChildScrollView(
-                    scrollDirection: Axis.horizontal,
-                    child: DataTable(
-                      columns: const [
-                        DataColumn(label: Text('Variant')),
-                        DataColumn(label: Text('Qty')),
-                        DataColumn(label: Text('Total')),
-                      ],
-                      rows: rows,
-                    ),
-                  ),
-                ),
-                Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: Text(
-                    'Grand total: €${totalSum.toStringAsFixed(2)}',
-                    style: const TextStyle(fontWeight: FontWeight.bold),
-                  ),
-                ),
-              ],
-            );
-          }
-
-          final Map<String, List<_Summary>> byVariant = {};
-          for (var s in grouped.values) {
-            byVariant.putIfAbsent(s.notes, () => []).add(s);
-          }
-
-          if (_byVariant) {
-            double grandTotal = 0;
             final children = <Widget>[];
-            byVariant.forEach((variant, summaries) {
-              final rows = summaries.map((s) {
-                final total = s.count * s.price;
+            byVariant.forEach((variant, orders) {
+              final rows = orders.map((o) {
                 return DataRow(
                   color: MaterialStateProperty.all(_colorForVariant(variant)),
                   cells: [
-                    DataCell(Text(s.name)),
-                    DataCell(Text('${s.count}')),
-                    DataCell(Text('€${total.toStringAsFixed(2)}')),
+                    DataCell(Text(o['foodName'] as String)),
+                    DataCell(Text(o['user'] as String)),
+                    DataCell(Text((o['notes'] as String?)?.isEmpty ?? true
+                        ? '-'
+                        : o['notes'] as String)),
                   ],
                 );
               }).toList();
-
-              final variantTotal = summaries
-                  .fold<double>(0, (p, e) => p + (e.price * e.count));
-              grandTotal += variantTotal;
 
               children.addAll([
                 Container(
@@ -141,38 +83,28 @@ class _ExportScreenState extends State<ExportScreen> {
                   scrollDirection: Axis.horizontal,
                   child: DataTable(
                     columns: const [
-                      DataColumn(label: Text('Product')),
-                      DataColumn(label: Text('Qty')),
-                      DataColumn(label: Text('Total')),
+                      DataColumn(label: Text('Food')),
+                      DataColumn(label: Text('User')),
+                      DataColumn(label: Text('Variant')),
                     ],
                     rows: rows,
-                  ),
-                ),
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                  child: Align(
-                    alignment: Alignment.centerRight,
-                    child: Text(
-                      'Subtotal: €${variantTotal.toStringAsFixed(2)}',
-                      style: const TextStyle(fontWeight: FontWeight.w500),
-                    ),
                   ),
                 ),
                 const SizedBox(height: 16),
               ]);
             });
 
-            children.add(
-              Padding(
-                padding: const EdgeInsets.all(16),
-                child: Text(
-                  'Grand total: €${grandTotal.toStringAsFixed(2)}',
-                  style: const TextStyle(fontWeight: FontWeight.bold),
-                ),
-              ),
-            );
-
             return ListView(children: children);
+          }
+
+          final Map<String, _Summary> grouped = {};
+          for (var d in docs) {
+            final data = d.data();
+            final name = data['foodName'] as String;
+            final notes = (data['notes'] as String?) ?? '';
+            final price = (data['price'] as num).toDouble();
+            final key = '$name||$notes';
+            grouped.putIfAbsent(key, () => _Summary(name, notes, price)).count++;
           }
 
           final rows = grouped.values.map((s) {
@@ -226,14 +158,4 @@ class _Summary {
   int count;
 
   _Summary(this.name, this.notes, this.price) : count = 0;
-}
-
-class _VariantSummary {
-  final String notes;
-  int count;
-  double total;
-
-  _VariantSummary(this.notes)
-      : count = 0,
-        total = 0;
 }
