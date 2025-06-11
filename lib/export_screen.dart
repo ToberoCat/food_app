@@ -102,6 +102,79 @@ class _ExportScreenState extends State<ExportScreen> {
             );
           }
 
+          final Map<String, List<_Summary>> byVariant = {};
+          for (var s in grouped.values) {
+            byVariant.putIfAbsent(s.notes, () => []).add(s);
+          }
+
+          if (_byVariant) {
+            double grandTotal = 0;
+            final children = <Widget>[];
+            byVariant.forEach((variant, summaries) {
+              final rows = summaries.map((s) {
+                final total = s.count * s.price;
+                return DataRow(
+                  color: MaterialStateProperty.all(_colorForVariant(variant)),
+                  cells: [
+                    DataCell(Text(s.name)),
+                    DataCell(Text('${s.count}')),
+                    DataCell(Text('€${total.toStringAsFixed(2)}')),
+                  ],
+                );
+              }).toList();
+
+              final variantTotal = summaries
+                  .fold<double>(0, (p, e) => p + (e.price * e.count));
+              grandTotal += variantTotal;
+
+              children.addAll([
+                Container(
+                  width: double.infinity,
+                  color: _colorForVariant(variant),
+                  padding: const EdgeInsets.all(8),
+                  child: Text(
+                    variant.isEmpty ? '-' : variant,
+                    style: const TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                ),
+                SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  child: DataTable(
+                    columns: const [
+                      DataColumn(label: Text('Product')),
+                      DataColumn(label: Text('Qty')),
+                      DataColumn(label: Text('Total')),
+                    ],
+                    rows: rows,
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  child: Align(
+                    alignment: Alignment.centerRight,
+                    child: Text(
+                      'Subtotal: €${variantTotal.toStringAsFixed(2)}',
+                      style: const TextStyle(fontWeight: FontWeight.w500),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 16),
+              ]);
+            });
+
+            children.add(
+              Padding(
+                padding: const EdgeInsets.all(16),
+                child: Text(
+                  'Grand total: €${grandTotal.toStringAsFixed(2)}',
+                  style: const TextStyle(fontWeight: FontWeight.bold),
+                ),
+              ),
+            );
+
+            return ListView(children: children);
+          }
+
           final rows = grouped.values.map((s) {
             final total = s.count * s.price;
             return DataRow(cells: [
