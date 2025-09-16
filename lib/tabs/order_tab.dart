@@ -97,7 +97,13 @@ class _OrdersTabState extends State<OrdersTab> {
                         final data = doc.data();
                         return DropdownMenuItem<String>(
                           value: doc.id,
-                          child: Text('${data['name']} - €${data['price'].toStringAsFixed(2)}'),
+                          child: SizedBox(
+                            width: 200,
+                            child: Text(
+                              '${data['name']} - €${data['price'].toStringAsFixed(2)}',
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
                           onTap: () {
                             selectedFoodName = data['name'];
                             selectedPrice = data['price'].toDouble();

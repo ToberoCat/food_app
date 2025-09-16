@@ -146,7 +146,7 @@ class _BalanceTabState extends State<BalanceTab> {
                       final order = orders[index];
                       final orderId = order.id;
                       final isSettled = _settledOrders.contains(orderId);
-                      final timestamp = (order['timestamp'] as Timestamp).toDate();
+                      final timestamp = (order['ts'] as Timestamp).toDate();
 
                       return Card(
                         margin: const EdgeInsets.only(bottom: 8),
@@ -160,7 +160,7 @@ class _BalanceTabState extends State<BalanceTab> {
                             ),
                           ),
                           title: Text(
-                            order['food'],
+                            order['foodName'],
                             style: TextStyle(
                               decoration: isSettled ? TextDecoration.lineThrough : null,
                               color: isSettled ? Colors.grey : null,
